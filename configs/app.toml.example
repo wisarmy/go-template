@@ -1,0 +1,13 @@
+[server]
+addr = ":8080"
+read_timeout = 10
+write_timeout = 10
+shutdown_timeout = 5
+
+[log]
+# Log level: debug, info, warning, error, fatal
+level = "info"
+# Log output: console, file, both
+output = "console"
+# Log file path (effective when output is file or both)
+file = "logs/app.log"
