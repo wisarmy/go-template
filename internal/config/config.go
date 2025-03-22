@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"go-template/pkg/logger"
 	"os"
 	"path/filepath"
 
@@ -10,8 +11,8 @@ import (
 
 // Config holds all configuration for the application
 type Config struct {
-	Server ServerConfig `mapstructure:"server"`
-	Log    LogConfig    `mapstructure:"log"`
+	Server ServerConfig  `mapstructure:"server"`
+	Log    logger.Config `mapstructure:"log"`
 }
 
 // ServerConfig holds server related configuration
@@ -20,13 +21,6 @@ type ServerConfig struct {
 	ReadTimeout     int    `mapstructure:"read_timeout"`
 	WriteTimeout    int    `mapstructure:"write_timeout"`
 	ShutdownTimeout int    `mapstructure:"shutdown_timeout"`
-}
-
-// LogConfig holds logging related configuration
-type LogConfig struct {
-	Level  string `mapstructure:"level"`
-	Output string `mapstructure:"output"`
-	File   string `mapstructure:"file"`
 }
 
 // Load loads configuration from file
@@ -73,9 +67,15 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("server.read_timeout", 10)
 	v.SetDefault("server.write_timeout", 10)
 	v.SetDefault("server.shutdown_timeout", 5)
+
+	// Log defaults
 	v.SetDefault("log.level", "info")
 	v.SetDefault("log.output", "console")
 	v.SetDefault("log.file", "logs/app.log")
+	v.SetDefault("log.max_size", 100)
+	v.SetDefault("log.max_backups", 3)
+	v.SetDefault("log.max_age", 28)
+	v.SetDefault("log.compress", true)
 
 	// Read config
 	if err := v.ReadInConfig(); err != nil {

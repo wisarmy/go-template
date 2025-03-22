@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"go-template/internal/config"
+	"go-template/pkg/logger"
 	"net/http"
 	"os"
 	"os/signal"
@@ -20,7 +21,10 @@ var daemonCmd = &cobra.Command{
 	Short: "Start the daemon service",
 	Long:  `Start the daemon service`,
 	Run: func(cmd *cobra.Command, args []string) {
-		startDaemon()
+		if err := startDaemon(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
 	},
 }
 
@@ -28,12 +32,16 @@ func init() {
 	rootCmd.AddCommand(daemonCmd)
 }
 
-func startDaemon() {
+func startDaemon() error {
 	cfg, err := config.Load(cfgFile)
 	if err != nil {
-		fmt.Printf("Failed to load config: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("Failed to load config: %w", err)
 	}
+	// Initialize logger
+	if err := logger.Init(&cfg.Log); err != nil {
+		return fmt.Errorf("Failed to initialize logger: %w", err)
+	}
+	defer logger.Sync()
 
 	if cfg.Log.Level == "debug" {
 		gin.SetMode(gin.DebugMode)
@@ -61,9 +69,9 @@ func startDaemon() {
 
 	// Start server in a goroutine
 	go func() {
-		fmt.Printf("Server started at: %s\n", cfg.Server.Addr)
+		logger.Infof("Listening on %s", cfg.Server.Addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			fmt.Printf("Listen failed: %s\n", err)
+			logger.Errorf("Listen failed: %s", err)
 		}
 	}()
 
@@ -73,7 +81,7 @@ func startDaemon() {
 
 	// Wait for signal
 	sig := <-sigChan
-	fmt.Printf("received signal: %v, shutting down service...\n", sig)
+	logger.Infof("received signal: %v, shutting down service...", sig)
 
 	// Create a context with 5 second timeout
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.Server.ShutdownTimeout)*time.Second)
@@ -81,6 +89,7 @@ func startDaemon() {
 
 	// Gracefully shut down the server
 	if err := srv.Shutdown(ctx); err != nil {
-		fmt.Printf("server shutdown error: %v\n", err)
+		logger.Errorf("server shutdown error: %v", err)
 	}
+	return nil
 }

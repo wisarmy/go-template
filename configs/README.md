@@ -4,7 +4,7 @@ This directory contains configuration files for the application.
 
 ## Usage
 
-1. Copy `../app.toml.example` to `app.toml` in this directory
+1. Copy `app.toml.example` to `app.toml` in this directory
 2. Modify the settings as needed for your environment
 
 ## Environment-specific Configurations

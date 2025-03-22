@@ -11,3 +11,11 @@ level = "info"
 output = "console"
 # Log file path (effective when output is file or both)
 file = "logs/app.log"
+# Maximum size in megabytes of the log file before it gets rotated
+max_size = 100
+# Maximum number of old log files to retain
+max_backups = 3
+# Maximum number of days to retain old log files
+max_age = 28
+# Compress determines if the rotated log files should be compressed
+compress = true
