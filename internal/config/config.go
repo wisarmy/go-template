@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"go-template/internal/api"
 	"go-template/pkg/logger"
 	"os"
 	"path/filepath"
@@ -11,16 +12,8 @@ import (
 
 // Config holds all configuration for the application
 type Config struct {
-	Server ServerConfig  `mapstructure:"server"`
+	Server api.Config    `mapstructure:"server"`
 	Log    logger.Config `mapstructure:"log"`
-}
-
-// ServerConfig holds server related configuration
-type ServerConfig struct {
-	Addr            string `mapstructure:"addr"`
-	ReadTimeout     int    `mapstructure:"read_timeout"`
-	WriteTimeout    int    `mapstructure:"write_timeout"`
-	ShutdownTimeout int    `mapstructure:"shutdown_timeout"`
 }
 
 // Load loads configuration from file
