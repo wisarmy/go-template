@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"go-template/internal/config"
 	"go-template/pkg/logger"
 	"net/http"
 	"os"
@@ -33,16 +32,6 @@ func init() {
 }
 
 func startDaemon() error {
-	cfg, err := config.Load(cfgFile)
-	if err != nil {
-		return fmt.Errorf("Failed to load config: %w", err)
-	}
-	// Initialize logger
-	if err := logger.Init(&cfg.Log); err != nil {
-		return fmt.Errorf("Failed to initialize logger: %w", err)
-	}
-	defer logger.Sync()
-
 	if cfg.Log.Level == "debug" {
 		gin.SetMode(gin.DebugMode)
 	} else {
@@ -51,6 +40,10 @@ func startDaemon() error {
 
 	// Initialize Gin engine
 	r := gin.Default()
+	if cfg.Log.Level == "debug" {
+		r.Use(logger.GinMiddleware())
+	}
+	r.Use(gin.Recovery())
 
 	// Configure routes
 	r.GET("/", func(c *gin.Context) {

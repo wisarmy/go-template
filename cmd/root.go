@@ -1,19 +1,46 @@
 package cmd
 
 import (
+	"fmt"
+	"go-template/internal/config"
+	"go-template/pkg/logger"
 	"os"
 
 	"github.com/spf13/cobra"
 )
 
-var cfgFile string
+var (
+	cfgFile string
+	cfg     *config.Config
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "go-template",
 	Short: "A go template application",
 	Long:  `A go template application containing a set of utilities`,
-	// Run:   func(cmd *cobra.Command, args []string) {},
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		// Skip config loading for help command
+		if cmd.Name() == "help" {
+			return nil
+		}
+		// Load config
+		var err error
+		cfg, err = config.Load(cfgFile)
+		if err != nil {
+			return fmt.Errorf("failed to load config: %w", err)
+		}
+
+		// Initialize logger
+		if err := logger.Init(&cfg.Log); err != nil {
+			return fmt.Errorf("failed to initialize logger: %w", err)
+		}
+
+		return nil
+	},
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		logger.Sync()
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

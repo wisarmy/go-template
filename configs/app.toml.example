@@ -19,3 +19,5 @@ max_backups = 3
 max_age = 28
 # Compress determines if the rotated log files should be compressed
 compress = true
+# Enable colored output for console logs
+color = true

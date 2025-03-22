@@ -27,6 +27,7 @@ type Config struct {
 	MaxBackups int    `mapstructure:"max_backups"`
 	MaxAge     int    `mapstructure:"max_age"`
 	Compress   bool   `mapstructure:"compress"`
+	Color      bool   `mapstructure:"color"`
 }
 
 // NewDefaultConfig returns a default logger configuration
@@ -39,6 +40,7 @@ func NewDefaultConfig() *Config {
 		MaxBackups: 3,
 		MaxAge:     28,
 		Compress:   true,
+		Color:      true,
 	}
 }
 
@@ -46,11 +48,19 @@ func NewDefaultConfig() *Config {
 func Init(cfg *Config) error {
 	var err error
 	once.Do(func() {
-		// Create encoder config
-		encoderConfig := zap.NewProductionEncoderConfig()
-		encoderConfig.TimeKey = "time"
-		encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-		encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+		consoleEncoderConfig := zap.NewProductionEncoderConfig()
+		consoleEncoderConfig.TimeKey = "time"
+		consoleEncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+		if cfg.Color {
+			consoleEncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		} else {
+			consoleEncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+		}
+
+		jsonEncoderConfig := zap.NewProductionEncoderConfig()
+		jsonEncoderConfig.TimeKey = "time"
+		jsonEncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+		jsonEncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 
 		// Determine log level
 		level := getLogLevel(cfg.Level)
@@ -60,7 +70,7 @@ func Init(cfg *Config) error {
 		switch cfg.Output {
 		case "console":
 			core = zapcore.NewCore(
-				zapcore.NewConsoleEncoder(encoderConfig),
+				zapcore.NewConsoleEncoder(consoleEncoderConfig),
 				zapcore.AddSync(os.Stdout),
 				level,
 			)
@@ -72,7 +82,7 @@ func Init(cfg *Config) error {
 				return
 			}
 			core = zapcore.NewCore(
-				zapcore.NewJSONEncoder(encoderConfig),
+				zapcore.NewJSONEncoder(jsonEncoderConfig),
 				zapcore.AddSync(&lumberjack.Logger{
 					Filename:   cfg.File,
 					MaxSize:    cfg.MaxSize,
@@ -91,12 +101,12 @@ func Init(cfg *Config) error {
 			}
 			core = zapcore.NewTee(
 				zapcore.NewCore(
-					zapcore.NewConsoleEncoder(encoderConfig),
+					zapcore.NewConsoleEncoder(consoleEncoderConfig),
 					zapcore.AddSync(os.Stdout),
 					level,
 				),
 				zapcore.NewCore(
-					zapcore.NewJSONEncoder(encoderConfig),
+					zapcore.NewJSONEncoder(jsonEncoderConfig),
 					zapcore.AddSync(&lumberjack.Logger{
 						Filename:   cfg.File,
 						MaxSize:    cfg.MaxSize,
@@ -110,7 +120,7 @@ func Init(cfg *Config) error {
 		default:
 			// Default to console if invalid output type
 			core = zapcore.NewCore(
-				zapcore.NewConsoleEncoder(encoderConfig),
+				zapcore.NewConsoleEncoder(consoleEncoderConfig),
 				zapcore.AddSync(os.Stdout),
 				level,
 			)
