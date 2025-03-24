@@ -33,11 +33,11 @@ func init() {
 
 func startDaemon() error {
 	cfg.Server.Debug = cfg.Log.Level == "debug"
-	server := api.NewServer(cfg.Server)
+	server := api.NewServer(cfg.Server, dbClient)
 
 	// Start server in a goroutine
 	go func() {
-		if err := server.Start(); err != nil && err != http.ErrServerClosed {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Errorf("Listen failed: %s", err)
 		}
 	}()

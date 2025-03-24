@@ -3,6 +3,7 @@ GOCMD=go
 GOBUILD=$(GOCMD) build
 GOTEST=$(GOCMD) test
 GOMOD=$(GOCMD) mod
+GOGENERATE=$(GOCMD) generate
 BINARY_NAME=go-template
 MAIN_PATH=./main.go
 
@@ -11,7 +12,7 @@ BUILD_DIR=./bin
 
 # Default target
 .PHONY: all
-all: test build
+all: deps generate test build
 
 # Build the project
 .PHONY: build
@@ -29,6 +30,11 @@ test:
 deps:
 	$(GOMOD) tidy
 
+# Generate code (for Ent ORM)
+.PHONY: generate
+generate:
+	$(GOGENERATE) ./ent
+
 # Help command
 .PHONY: help
 help:
@@ -37,4 +43,5 @@ help:
 	@echo "  make build        - Build the binary"
 	@echo "  make test         - Run tests"
 	@echo "  make deps         - Update dependencies"
+	@echo "  make generate     - Generate Ent code"
 	@echo "  make help         - Show this help"

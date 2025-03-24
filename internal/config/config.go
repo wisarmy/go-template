@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"go-template/internal/api"
+	"go-template/internal/database"
 	"go-template/pkg/logger"
 	"os"
 	"path/filepath"
@@ -12,8 +13,9 @@ import (
 
 // Config holds all configuration for the application
 type Config struct {
-	Server api.Config    `mapstructure:"server"`
-	Log    logger.Config `mapstructure:"log"`
+	Server   api.Config      `mapstructure:"server"`
+	Log      logger.Config   `mapstructure:"log"`
+	Database database.Config `mapstructure:"database"`
 }
 
 // Load loads configuration from file

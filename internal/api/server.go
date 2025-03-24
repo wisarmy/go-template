@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"go-template/internal/api/router"
+	"go-template/internal/database"
 	"go-template/pkg/logger"
 	"net/http"
 	"time"
@@ -24,10 +25,11 @@ type Server struct {
 	server *http.Server
 	router *gin.Engine
 	config Config
+	db     *database.Client
 }
 
 // NewServer creates and configures a new server instance
-func NewServer(cfg Config) *Server {
+func NewServer(cfg Config, db *database.Client) *Server {
 	// Set Gin mode based on debug flag
 	if cfg.Debug {
 		gin.SetMode(gin.DebugMode)
@@ -45,7 +47,7 @@ func NewServer(cfg Config) *Server {
 	r.Use(gin.Recovery())
 
 	// Setup routes
-	router.SetupRoutes(r)
+	router.SetupRoutes(r, db)
 
 	// Create HTTP server
 	srv := &http.Server{
@@ -63,7 +65,7 @@ func NewServer(cfg Config) *Server {
 }
 
 // Start begins listening for requests
-func (s *Server) Start() error {
+func (s *Server) ListenAndServe() error {
 	logger.Infof("Server listening on %s", s.config.Addr)
 	return s.server.ListenAndServe()
 }

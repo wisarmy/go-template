@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"go-template/internal/config"
+	"go-template/internal/database"
 	"go-template/pkg/logger"
 	"os"
 
@@ -10,8 +11,9 @@ import (
 )
 
 var (
-	cfgFile string
-	cfg     *config.Config
+	cfgFile  string
+	cfg      *config.Config
+	dbClient *database.Client
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -36,9 +38,23 @@ var rootCmd = &cobra.Command{
 			return fmt.Errorf("failed to initialize logger: %w", err)
 		}
 
+		// Initialize database connection
+		if cmd.Name() == "daemon" {
+			dbClient, err = database.New(&cfg.Database)
+			if err != nil {
+				return fmt.Errorf("failed to connect to database: %w", err)
+			}
+		}
+
 		return nil
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		// Close database connection if it exists
+		if dbClient != nil {
+			if err := dbClient.Close(); err != nil {
+				logger.Errorf("Error closing database connection: %v", err)
+			}
+		}
 		logger.Sync()
 	},
 }
