@@ -48,7 +48,7 @@ func GinMiddleware() gin.HandlerFunc {
 		} else if c.Writer.Status() >= 400 {
 			logger.Warn("Client error")
 		} else {
-			logger.Info("Request processed")
+			logger.Debug("Request processed")
 		}
 	}
 }

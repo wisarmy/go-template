@@ -6,6 +6,7 @@ import (
 	"go-template/ent"
 	"go-template/ent/migrate"
 	"go-template/pkg/logger"
+	"strings"
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -28,8 +29,22 @@ func New(cfg *Config) (*Client, error) {
 	logger.Info("Connecting to database...")
 
 	// options for the client
-	opts := []ent.Option{
-		// ent.Debug(), // Enable SQL statement logging
+	var opts []ent.Option
+	if cfg.Debug {
+		opts = append(opts, ent.Debug())
+		opts = append(opts, ent.Log(func(a ...any) {
+			message := fmt.Sprint(a...)
+			// filter initialization queries
+			if strings.Contains(message, "INFORMATION_SCHEMA") ||
+				strings.Contains(message, "pg_catalog") ||
+				strings.Contains(message, "server_version_num") ||
+				strings.Contains(message, "pg_namespace") ||
+				strings.Contains(message, "pg_constraint") ||
+				strings.Contains(message, "pg_class") {
+				return
+			}
+			logger.Info(message)
+		}))
 	}
 
 	// Connect to the database using the specified driver and DSN

@@ -25,3 +25,4 @@ color = true
 [database]
 driver = "postgres"
 dsn = "postgres://postgres:postgres@localhost:5432/gotemplate?sslmode=disable&search_path=public"
+debug = true
