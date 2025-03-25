@@ -22,7 +22,15 @@ func NewUserHandler(db *database.Client) *UserHandler {
 	return &UserHandler{db: db}
 }
 
-// List returns a list of users
+// List godoc
+// @Summary      List users
+// @Description  get user list
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Success      200  {array}   ent.User
+// @Failure      500  {object}  map[string]string
+// @Router       /users [get]
 func (h *UserHandler) List(c *gin.Context) {
 	users, err := h.db.Ent.User.Query().WithRole().All(c.Request.Context())
 	if err != nil {
@@ -34,7 +42,18 @@ func (h *UserHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 }
 
-// Get returns a specific user by ID
+// Get godoc
+// @Summary      Get a user
+// @Description  get user by ID
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        id   path      int  true  "User ID"
+// @Success      200  {object}  ent.User
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /users/{id} [get]
 func (h *UserHandler) Get(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -56,14 +75,19 @@ func (h *UserHandler) Get(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-// Create creates a new user
+// Create godoc
+// @Summary      Create a user
+// @Description  create a new user
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        user  body      UserCreateInput  true  "User Info"
+// @Success      201   {object}  ent.User
+// @Failure      400   {object}  map[string]string
+// @Failure      500   {object}  map[string]string
+// @Router       /users [post]
 func (h *UserHandler) Create(c *gin.Context) {
-	var input struct {
-		Name     string `json:"name" binding:"required"`
-		Email    string `json:"email" binding:"required,email"`
-		Password string `json:"password" binding:"required,min=6"`
-		RoleID   int    `json:"role_id" binding:"required"`
-	}
+	var input UserCreateInput
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -86,7 +110,35 @@ func (h *UserHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, user)
 }
 
-// Update updates an existing user
+// UserCreateInput represents the input for creating a user
+type UserCreateInput struct {
+	Name     string `json:"name" binding:"required" example:"John Doe"`
+	Email    string `json:"email" binding:"required,email" example:"john@example.com"`
+	Password string `json:"password" binding:"required,min=6" example:"secret123"`
+	RoleID   int    `json:"role_id" binding:"required" example:"1"`
+}
+
+// UserUpdateInput represents the input for updating a user
+type UserUpdateInput struct {
+	Name     string `json:"name" example:"John Doe"`
+	Email    string `json:"email" example:"john@example.com"`
+	Password string `json:"password" example:"newsecret123"`
+	RoleID   *int   `json:"role_id" example:"2"`
+}
+
+// Update godoc
+// @Summary      Update a user
+// @Description  update an existing user
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        id    path      int              true  "User ID"
+// @Param        user  body      UserUpdateInput  true  "User Info"
+// @Success      200   {object}  ent.User
+// @Failure      400   {object}  map[string]string
+// @Failure      404   {object}  map[string]string
+// @Failure      500   {object}  map[string]string
+// @Router       /users/{id} [put]
 func (h *UserHandler) Update(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -94,12 +146,7 @@ func (h *UserHandler) Update(c *gin.Context) {
 		return
 	}
 
-	var input struct {
-		Name     string `json:"name"`
-		Email    string `json:"email"`
-		Password string `json:"password"`
-		RoleID   *int   `json:"role_id"`
-	}
+	var input UserUpdateInput
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -160,7 +207,18 @@ func (h *UserHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-// Delete deletes a user by ID
+// Delete godoc
+// @Summary      Delete a user
+// @Description  delete a user by ID
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        id   path      int  true  "User ID"
+// @Success      200  {object}  map[string]string
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /users/{id} [delete]
 func (h *UserHandler) Delete(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

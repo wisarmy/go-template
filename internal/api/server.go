@@ -1,3 +1,8 @@
+// @title           Go Template API
+// @version         1.0
+// @description     A RESTful API for Go Template
+
+// @BasePath  /api/v1
 package api
 
 import (

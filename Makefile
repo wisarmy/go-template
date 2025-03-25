@@ -12,7 +12,7 @@ BUILD_DIR=./bin
 
 # Default target
 .PHONY: all
-all: deps generate test build
+all: deps generate swagger test build
 
 # Build the project
 .PHONY: build
@@ -35,6 +35,11 @@ deps:
 generate:
 	$(GOGENERATE) ./ent
 
+# Generate Swagger documentation
+.PHONY: swagger
+swagger:
+	swag init -g internal/api/server.go -o docs
+
 # Help command
 .PHONY: help
 help:
@@ -44,4 +49,5 @@ help:
 	@echo "  make test         - Run tests"
 	@echo "  make deps         - Update dependencies"
 	@echo "  make generate     - Generate Ent code"
+	@echo "  make swagger      - Generate Swagger documentation"
 	@echo "  make help         - Show this help"
