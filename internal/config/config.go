@@ -2,8 +2,8 @@ package config
 
 import (
 	"fmt"
-	"go-template/internal/api"
 	"go-template/internal/database"
+	"go-template/pkg/auth"
 	"go-template/pkg/logger"
 	"os"
 	"path/filepath"
@@ -13,9 +13,18 @@ import (
 
 // Config holds all configuration for the application
 type Config struct {
-	Server   api.Config      `mapstructure:"server"`
+	Server   ServerConfig    `mapstructure:"server"`
 	Log      logger.Config   `mapstructure:"log"`
 	Database database.Config `mapstructure:"database"`
+	JWT      auth.JWTConfig  `mapstructure:"jwt"`
+}
+
+type ServerConfig struct {
+	Addr            string `mapstructure:"addr"`
+	ReadTimeout     int    `mapstructure:"read_timeout"`
+	WriteTimeout    int    `mapstructure:"write_timeout"`
+	ShutdownTimeout int    `mapstructure:"shutdown_timeout"`
+	Debug           bool
 }
 
 // Load loads configuration from file
@@ -71,6 +80,12 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("log.max_backups", 3)
 	v.SetDefault("log.max_age", 28)
 	v.SetDefault("log.compress", true)
+
+	// jwt defaults
+	v.SetDefault("jwt.secret", "superSecretKey")
+	v.SetDefault("jwt.issuer", "go-template-api")
+	v.SetDefault("jwt.expiration", "24h")
+	v.SetDefault("jwt.refresh_expire", "168h")
 
 	// Read config
 	if err := v.ReadInConfig(); err != nil {

@@ -2,12 +2,18 @@
 // @version         1.0
 // @description     A RESTful API for Go Template
 
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
+
 // @BasePath  /api/v1
 package api
 
 import (
 	"context"
 	"go-template/internal/api/router"
+	"go-template/internal/config"
 	"go-template/internal/database"
 	"go-template/pkg/logger"
 	"net/http"
@@ -16,27 +22,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// ServerConfig holds server related configuration
-type Config struct {
-	Addr            string `mapstructure:"addr"`
-	ReadTimeout     int    `mapstructure:"read_timeout"`
-	WriteTimeout    int    `mapstructure:"write_timeout"`
-	ShutdownTimeout int    `mapstructure:"shutdown_timeout"`
-	Debug           bool
-}
-
 // Server represents the HTTP server
 type Server struct {
 	server *http.Server
 	router *gin.Engine
-	config Config
+	config *config.Config
 	db     *database.Client
 }
 
 // NewServer creates and configures a new server instance
-func NewServer(cfg Config, db *database.Client) *Server {
+func NewServer(cfg *config.Config, db *database.Client) *Server {
 	// Set Gin mode based on debug flag
-	if cfg.Debug {
+	if cfg.Server.Debug {
 		gin.SetMode(gin.DebugMode)
 	} else {
 		gin.SetMode(gin.ReleaseMode)
@@ -46,20 +43,20 @@ func NewServer(cfg Config, db *database.Client) *Server {
 	r := gin.Default()
 
 	// Add middleware
-	if cfg.Debug {
+	if cfg.Server.Debug {
 		r.Use(logger.GinMiddleware())
 	}
 	r.Use(gin.Recovery())
 
 	// Setup routes
-	router.SetupRoutes(r, db)
+	router.SetupRoutes(r, db, cfg)
 
 	// Create HTTP server
 	srv := &http.Server{
-		Addr:         cfg.Addr,
+		Addr:         cfg.Server.Addr,
 		Handler:      r,
-		ReadTimeout:  time.Duration(cfg.ReadTimeout) * time.Second,
-		WriteTimeout: time.Duration(cfg.WriteTimeout) * time.Second,
+		ReadTimeout:  time.Duration(cfg.Server.ReadTimeout) * time.Second,
+		WriteTimeout: time.Duration(cfg.Server.WriteTimeout) * time.Second,
 	}
 
 	return &Server{
@@ -71,7 +68,7 @@ func NewServer(cfg Config, db *database.Client) *Server {
 
 // Start begins listening for requests
 func (s *Server) ListenAndServe() error {
-	logger.Infof("Server listening on %s", s.config.Addr)
+	logger.Infof("Server listening on %s", s.config.Server.Addr)
 	return s.server.ListenAndServe()
 }
 

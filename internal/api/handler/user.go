@@ -11,7 +11,16 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
+
+func hashPassword(password string) (string, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hashedPassword), nil
+}
 
 // UserHandler handles user-related HTTP requests
 type UserHandler struct {
@@ -94,10 +103,16 @@ func (h *UserHandler) Create(c *gin.Context) {
 		return
 	}
 
+	hashedPassword, err := hashPassword(input.Password)
+	if err != nil {
+		logger.Errorf("Failed to hash password: %v", err)
+		response.Err(c, errcode.ServerError, "Failed to process user data")
+		return
+	}
 	user, err := h.db.Ent.User.Create().
 		SetName(input.Name).
 		SetEmail(input.Email).
-		SetPassword(input.Password).
+		SetPassword(hashedPassword).
 		SetRoleID(input.RoleID).
 		Save(c.Request.Context())
 
@@ -164,7 +179,13 @@ func (h *UserHandler) Update(c *gin.Context) {
 		update = update.SetEmail(input.Email)
 	}
 	if input.Password != "" {
-		update = update.SetPassword(input.Password)
+		hashedPassword, err := hashPassword(input.Password)
+		if err != nil {
+			logger.Errorf("Failed to hash password: %v", err)
+			response.Err(c, errcode.ServerError, "Failed to process user data")
+			return
+		}
+		update = update.SetPassword(hashedPassword)
 	}
 	// Handle role relationship
 	if input.RoleID != nil {

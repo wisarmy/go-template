@@ -5,6 +5,7 @@ go 1.24.1
 require (
 	entgo.io/ent v0.14.4
 	github.com/gin-gonic/gin v1.10.0
+	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.3
 	github.com/spf13/cobra v1.9.1
@@ -13,6 +14,7 @@ require (
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.4
 	go.uber.org/zap v1.27.0
+	golang.org/x/crypto v0.33.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
@@ -70,7 +72,6 @@ require (
 	github.com/zclconf/go-cty-yaml v1.1.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/arch v0.8.0 // indirect
-	golang.org/x/crypto v0.33.0 // indirect
 	golang.org/x/mod v0.23.0 // indirect
 	golang.org/x/net v0.35.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect

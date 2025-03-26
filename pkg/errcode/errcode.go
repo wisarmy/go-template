@@ -15,7 +15,7 @@ const (
 	UserDisabled      = "user.disabled"
 )
 
-// Authentication related error codes
+// Authentication error codes
 const (
 	AuthTokenInvalid = "auth.token.invalid"
 	AuthTokenExpired = "auth.token.expired"

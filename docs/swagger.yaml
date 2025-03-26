@@ -60,6 +60,54 @@ definitions:
         - $ref: '#/definitions/ent.Role'
         description: Role holds the value of the role edge.
     type: object
+  handler.LoginInput:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      password:
+        example: password123
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handler.LoginResponse:
+    properties:
+      expires_at:
+        type: string
+      refresh_token:
+        type: string
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/handler.UserInfo'
+    type: object
+  handler.RefreshInput:
+    properties:
+      refresh_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    required:
+    - refresh_token
+    type: object
+  handler.RegisterInput:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      name:
+        example: John Doe
+        type: string
+      password:
+        example: password123
+        minLength: 6
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
   handler.UserCreateInput:
     properties:
       email:
@@ -80,6 +128,17 @@ definitions:
     - name
     - password
     - role_id
+    type: object
+  handler.UserInfo:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      role:
+        type: string
     type: object
   handler.UserUpdateInput:
     properties:
@@ -102,6 +161,149 @@ info:
   title: Go Template API
   version: "1.0"
 paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a user and return JWT token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: User login
+      tags:
+      - auth
+  /auth/me:
+    get:
+      consumes:
+      - application/json
+      description: Returns information about the currently authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.UserInfo'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get current user info
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh JWT token using a refresh token
+      parameters:
+      - description: Refresh token
+        in: body
+        name: refresh
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RefreshInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Refresh token
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user account
+      parameters:
+      - description: User registration data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RegisterInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handler.UserInfo'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register new user
+      tags:
+      - auth
   /users:
     get:
       consumes:
@@ -281,4 +483,10 @@ paths:
       summary: Update a user
       tags:
       - users
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

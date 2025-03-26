@@ -33,7 +33,7 @@ func init() {
 
 func startDaemon() error {
 	cfg.Server.Debug = cfg.Log.Level == "debug"
-	server := api.NewServer(cfg.Server, dbClient)
+	server := api.NewServer(cfg, dbClient)
 
 	// Start server in a goroutine
 	go func() {

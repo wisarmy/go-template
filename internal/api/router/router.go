@@ -3,6 +3,7 @@ package router
 import (
 	"go-template/internal/api/handler"
 	"go-template/internal/api/middleware"
+	"go-template/internal/config"
 	"go-template/internal/database"
 
 	"github.com/gin-gonic/gin"
@@ -13,7 +14,7 @@ import (
 )
 
 // SetupRoutes configures all the routes for the server
-func SetupRoutes(r *gin.Engine, db *database.Client) {
+func SetupRoutes(r *gin.Engine, db *database.Client, cfg *config.Config) {
 	r.Use(middleware.CORS())
 	r.Use(middleware.RequestID())
 
@@ -24,20 +25,42 @@ func SetupRoutes(r *gin.Engine, db *database.Client) {
 	v1 := r.Group("/api/v1")
 	{
 		v1.GET("/", handler.Welcome)
+		// auth routes
+		authHandler := handler.NewAuthHandler(db, cfg.JWT)
+		auth := v1.Group("/auth")
+		{
+			auth.POST("/register", authHandler.Register)
+			auth.POST("/login", authHandler.Login)
+			auth.POST("/refresh", authHandler.RefreshToken)
+
+			authRequired := auth.Group("")
+			authRequired.Use(middleware.JWTAuthMiddleware(cfg.JWT))
+			{
+				authRequired.GET("/me", authHandler.GetUserInfo)
+			}
+		}
+
+		protected := v1.Group("")
+		protected.Use(middleware.JWTAuthMiddleware(cfg.JWT))
 		// User routes
 		userHandler := handler.NewUserHandler(db)
-		users := v1.Group("/users")
+		users := protected.Group("/users")
 		{
 			users.GET("", userHandler.List)
 			users.GET("/:id", userHandler.Get)
-			users.POST("", userHandler.Create)
-			users.PUT("/:id", userHandler.Update)
-			users.DELETE("/:id", userHandler.Delete)
+			adminOnly := users.Group("")
+			adminOnly.Use(middleware.RequireRole("admin"))
+			{
+				adminOnly.POST("", userHandler.Create)
+				adminOnly.PUT("/:id", userHandler.Update)
+				adminOnly.DELETE("/:id", userHandler.Delete)
+			}
 		}
 
 		// Role routes
 		roleHandler := handler.NewRoleHandler(db)
-		roles := v1.Group("/roles")
+		roles := protected.Group("/roles")
+		roles.Use(middleware.RequireRole("admin"))
 		{
 			roles.GET("", roleHandler.List)
 			roles.GET("/:id", roleHandler.Get)
