@@ -4,9 +4,10 @@ import (
 	"go-template/ent"
 	"go-template/ent/role"
 	"go-template/ent/user"
+	"go-template/internal/api/response"
 	"go-template/internal/database"
+	"go-template/pkg/errcode"
 	"go-template/pkg/logger"
-	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -35,11 +36,10 @@ func (h *UserHandler) List(c *gin.Context) {
 	users, err := h.db.Ent.User.Query().WithRole().All(c.Request.Context())
 	if err != nil {
 		logger.Errorf("Failed to fetch users: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users"})
+		response.Err(c, errcode.ServerError, "Failed to fetch users")
 		return
 	}
-
-	c.JSON(http.StatusOK, users)
+	response.Ok(c, users)
 }
 
 // Get godoc
@@ -57,22 +57,22 @@ func (h *UserHandler) List(c *gin.Context) {
 func (h *UserHandler) Get(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		response.Err(c, errcode.InvalidParams, "Invalid user ID")
 		return
 	}
 
 	user, err := h.db.Ent.User.Query().WithRole().Where(user.ID(id)).Only(c.Request.Context())
 	if err != nil {
 		if ent.IsNotFound(err) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			response.Err(c, errcode.UserNotFound)
 			return
 		}
 		logger.Errorf("Failed to fetch user: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user"})
+		response.Err(c, errcode.ServerError, "Failed to fetch user")
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	response.Ok(c, user)
 }
 
 // Create godoc
@@ -90,7 +90,7 @@ func (h *UserHandler) Create(c *gin.Context) {
 	var input UserCreateInput
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.Err(c, errcode.InvalidParams, err.Error())
 		return
 	}
 
@@ -103,11 +103,11 @@ func (h *UserHandler) Create(c *gin.Context) {
 
 	if err != nil {
 		logger.Errorf("Failed to create user: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+		response.Err(c, errcode.ServerError, "Failed to create user")
 		return
 	}
 
-	c.JSON(http.StatusCreated, user)
+	response.Ok(c, user)
 }
 
 // UserCreateInput represents the input for creating a user
@@ -142,14 +142,14 @@ type UserUpdateInput struct {
 func (h *UserHandler) Update(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		response.Err(c, errcode.InvalidParams, "Invalid user ID")
 		return
 	}
 
 	var input UserUpdateInput
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.Err(c, errcode.InvalidParams, err.Error())
 		return
 	}
 
@@ -176,12 +176,12 @@ func (h *UserHandler) Update(c *gin.Context) {
 
 			if err != nil {
 				logger.Errorf("Failed to check role existence: %v", err)
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to validate role"})
+				response.Err(c, errcode.ServerError, "Failed to validate role")
 				return
 			}
 
 			if !exists {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Specified role does not exist"})
+				response.Err(c, errcode.RoleNotFound)
 				return
 			}
 
@@ -196,15 +196,15 @@ func (h *UserHandler) Update(c *gin.Context) {
 	user, err := update.Save(c.Request.Context())
 	if err != nil {
 		if ent.IsNotFound(err) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			response.Err(c, errcode.UserNotFound)
 			return
 		}
 		logger.Errorf("Failed to update user: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
+		response.Err(c, errcode.ServerError, "Failed to update user")
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	response.Ok(c, user)
 }
 
 // Delete godoc
@@ -222,20 +222,20 @@ func (h *UserHandler) Update(c *gin.Context) {
 func (h *UserHandler) Delete(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		response.Err(c, errcode.InvalidParams, "Invalid user ID")
 		return
 	}
 
 	err = h.db.Ent.User.DeleteOneID(id).Exec(c.Request.Context())
 	if err != nil {
 		if ent.IsNotFound(err) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			response.Err(c, errcode.UserNotFound)
 			return
 		}
 		logger.Errorf("Failed to delete user: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
+		response.Err(c, errcode.ServerError, "Failed to delete user")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
+	response.OkWithMessage(c, "User deleted successfully", nil)
 }

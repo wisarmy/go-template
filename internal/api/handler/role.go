@@ -4,9 +4,10 @@ import (
 	"go-template/ent"
 	"go-template/ent/role"
 	"go-template/ent/user"
+	"go-template/internal/api/response"
 	"go-template/internal/database"
+	"go-template/pkg/errcode"
 	"go-template/pkg/logger"
-	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -39,18 +40,18 @@ func (h *RoleHandler) List(c *gin.Context) {
 	roles, err := query.All(c.Request.Context())
 	if err != nil {
 		logger.Errorf("Failed to fetch roles: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch roles"})
+		response.Err(c, errcode.ServerError, "Failed to fetch roles")
 		return
 	}
 
-	c.JSON(http.StatusOK, roles)
+	response.Ok(c, roles)
 }
 
 // Get returns a specific role by ID
 func (h *RoleHandler) Get(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role ID"})
+		response.Err(c, errcode.InvalidParams, "Invalid role ID")
 		return
 	}
 
@@ -69,15 +70,15 @@ func (h *RoleHandler) Get(c *gin.Context) {
 	r, err := query.Only(c.Request.Context())
 	if err != nil {
 		if ent.IsNotFound(err) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Role not found"})
+			response.Err(c, errcode.RoleNotFound)
 			return
 		}
 		logger.Errorf("Failed to fetch role: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch role"})
+		response.Err(c, errcode.ServerError, "Failed to fetch role")
 		return
 	}
 
-	c.JSON(http.StatusOK, r)
+	response.Ok(c, r)
 }
 
 // Create creates a new role
@@ -88,7 +89,7 @@ func (h *RoleHandler) Create(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.Err(c, errcode.InvalidParams, err.Error())
 		return
 	}
 
@@ -100,18 +101,18 @@ func (h *RoleHandler) Create(c *gin.Context) {
 
 	if err != nil {
 		logger.Errorf("Failed to create role: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create role"})
+		response.Err(c, errcode.ServerError, "Failed to create role")
 		return
 	}
 
-	c.JSON(http.StatusCreated, r)
+	response.Ok(c, r)
 }
 
 // Update updates an existing role
 func (h *RoleHandler) Update(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role ID"})
+		response.Err(c, errcode.InvalidParams, "Invalid role ID")
 		return
 	}
 
@@ -121,7 +122,7 @@ func (h *RoleHandler) Update(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.Err(c, errcode.InvalidParams, err.Error())
 		return
 	}
 
@@ -140,22 +141,22 @@ func (h *RoleHandler) Update(c *gin.Context) {
 	r, err := update.Save(c.Request.Context())
 	if err != nil {
 		if ent.IsNotFound(err) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Role not found"})
+			response.Err(c, errcode.RoleNotFound)
 			return
 		}
 		logger.Errorf("Failed to update role: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update role"})
+		response.Err(c, errcode.ServerError, "Failed to update role")
 		return
 	}
 
-	c.JSON(http.StatusOK, r)
+	response.Ok(c, r)
 }
 
 // Delete deletes a role by ID
 func (h *RoleHandler) Delete(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role ID"})
+		response.Err(c, errcode.InvalidParams, "Invalid role ID")
 		return
 	}
 
@@ -166,16 +167,15 @@ func (h *RoleHandler) Delete(c *gin.Context) {
 
 	if err != nil {
 		logger.Errorf("Failed to check role usage: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check role usage"})
+		response.Err(c, errcode.ServerError, "Failed to check role usage")
 		return
 	}
 
 	// Prevent deletion if role is in use
 	if count > 0 {
-		c.JSON(http.StatusConflict, gin.H{
-			"error": "Cannot delete role that is assigned to users",
+		response.ErrWithData(c, errcode.RoleInUse, map[string]interface{}{
 			"count": count,
-		})
+		}, "Cannot delete role that is assigned to users")
 		return
 	}
 
@@ -183,22 +183,22 @@ func (h *RoleHandler) Delete(c *gin.Context) {
 	err = h.db.Ent.Role.DeleteOneID(id).Exec(c.Request.Context())
 	if err != nil {
 		if ent.IsNotFound(err) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Role not found"})
+			response.Err(c, errcode.RoleNotFound)
 			return
 		}
 		logger.Errorf("Failed to delete role: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete role"})
+		response.Err(c, errcode.ServerError, "Failed to delete role")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Role deleted successfully"})
+	response.OkWithMessage(c, "Role deleted successfully", nil)
 }
 
 // GetUsers returns all users with a specific role
 func (h *RoleHandler) GetUsers(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role ID"})
+		response.Err(c, errcode.InvalidParams, "Invalid role ID")
 		return
 	}
 
@@ -210,13 +210,13 @@ func (h *RoleHandler) GetUsers(c *gin.Context) {
 
 	if err != nil {
 		if ent.IsNotFound(err) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Role not found"})
+			response.Err(c, errcode.RoleNotFound)
 			return
 		}
 		logger.Errorf("Failed to fetch users for role: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users"})
+		response.Err(c, errcode.ServerError, "Failed to fetch users")
 		return
 	}
 
-	c.JSON(http.StatusOK, users)
+	response.Ok(c, users)
 }
