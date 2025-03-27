@@ -12,6 +12,7 @@ package api
 
 import (
 	"context"
+	"go-template/internal/api/middleware"
 	"go-template/internal/api/router"
 	"go-template/internal/config"
 	"go-template/internal/database"
@@ -44,7 +45,7 @@ func NewServer(cfg *config.Config, db *database.Client) *Server {
 
 	// Add middleware
 	if cfg.Server.Debug {
-		r.Use(logger.GinMiddleware())
+		r.Use(middleware.RequestLog())
 	}
 	r.Use(gin.Recovery())
 
