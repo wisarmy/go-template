@@ -108,6 +108,23 @@ definitions:
     - name
     - password
     type: object
+  handler.RoleCreateInput:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    required:
+    - description
+    - name
+    type: object
+  handler.RoleUpdateInput:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
   handler.UserCreateInput:
     properties:
       email:
@@ -155,6 +172,23 @@ definitions:
         example: 2
         type: integer
     type: object
+  response.Response:
+    properties:
+      code:
+        description: code identifier
+        type: string
+      data:
+        description: Response data
+      message:
+        description: code message
+        type: string
+      request_id:
+        description: Unique request identifier
+        type: string
+      timestamp:
+        description: Unix timestamp in milliseconds
+        type: integer
+    type: object
 info:
   contact: {}
   description: A RESTful API for Go Template
@@ -177,27 +211,18 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: ok
           schema:
-            $ref: '#/definitions/handler.LoginResponse'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.LoginResponse'
+              type: object
         "500":
-          description: Internal Server Error
+          description: server.error ｜ invalid.params ｜ user.login.error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/response.Response'
       summary: User login
       tags:
       - auth
@@ -210,21 +235,18 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: ok
           schema:
-            $ref: '#/definitions/handler.UserInfo'
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.UserInfo'
+              type: object
         "500":
-          description: Internal Server Error
+          description: server.error ｜ invalid.params ｜ user.unauthorized | user.not_found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/response.Response'
       security:
       - BearerAuth: []
       summary: Get current user info
@@ -246,27 +268,19 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: ok
           schema:
-            $ref: '#/definitions/handler.LoginResponse'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.LoginResponse'
+              type: object
         "500":
-          description: Internal Server Error
+          description: server.error ｜ invalid.params ｜ auth.token.expired | auth.token.invalid
+            | user.not_found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/response.Response'
       summary: Refresh token
       tags:
       - auth
@@ -285,25 +299,220 @@ paths:
       produces:
       - application/json
       responses:
-        "201":
-          description: Created
+        "200":
+          description: ok
           schema:
-            $ref: '#/definitions/handler.UserInfo'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.UserInfo'
+              type: object
         "500":
-          description: Internal Server Error
+          description: server.error ｜ invalid.params ｜ user.register.error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/response.Response'
       summary: Register new user
       tags:
       - auth
+  /roles:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of roles
+      parameters:
+      - description: Include users information
+        in: query
+        name: with_users
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/ent.Role'
+                  type: array
+              type: object
+        "500":
+          description: server.error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: List Roles
+      tags:
+      - roles
+    post:
+      consumes:
+      - application/json
+      description: create a new role
+      parameters:
+      - description: Role Info
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RoleCreateInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/ent.Role'
+              type: object
+        "500":
+          description: server.error ｜ invalid.params
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Create a role
+      tags:
+      - roles
+  /roles/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: delete a role by ID
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: server.error ｜ invalid.params | role.not_found | role.in_use
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete a role
+      tags:
+      - roles
+    get:
+      consumes:
+      - application/json
+      description: Get a role by ID
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Include users information
+        in: query
+        name: with_users
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/ent.Role'
+              type: object
+        "500":
+          description: server.error | invalid.params | role.not_found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get a role
+      tags:
+      - roles
+    put:
+      consumes:
+      - application/json
+      description: update an existing role
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Role Info
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RoleUpdateInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/ent.Role'
+              type: object
+        "500":
+          description: server.error ｜ invalid.params | role.not_found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Update a role
+      tags:
+      - roles
+  /roles/{id}/users:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of users with a specific role
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/ent.User'
+                  type: array
+              type: object
+        "500":
+          description: server.error ｜ invalid.params | role.not_found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get Users with a specific role
+      tags:
+      - roles
   /users:
     get:
       consumes:
@@ -313,17 +522,22 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: ok
           schema:
-            items:
-              $ref: '#/definitions/ent.User'
-            type: array
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/ent.User'
+                  type: array
+              type: object
         "500":
-          description: Internal Server Error
+          description: server.error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
       summary: List users
       tags:
       - users
@@ -341,22 +555,21 @@ paths:
       produces:
       - application/json
       responses:
-        "201":
-          description: Created
+        "200":
+          description: ok
           schema:
-            $ref: '#/definitions/ent.User'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/ent.User'
+              type: object
         "500":
-          description: Internal Server Error
+          description: server.error ｜ invalid.params
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
       summary: Create a user
       tags:
       - users
@@ -375,29 +588,15 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: ok
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/response.Response'
         "500":
-          description: Internal Server Error
+          description: server.error ｜ invalid.params | user.not_found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
       summary: Delete a user
       tags:
       - users
@@ -415,27 +614,20 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: ok
           schema:
-            $ref: '#/definitions/ent.User'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/ent.User'
+              type: object
         "500":
-          description: Internal Server Error
+          description: server.error ｜ invalid.params ｜ user.not_found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
       summary: Get a user
       tags:
       - users
@@ -459,27 +651,20 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: ok
           schema:
-            $ref: '#/definitions/ent.User'
-        "400":
-          description: Bad Request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/ent.User'
+              type: object
         "500":
-          description: Internal Server Error
+          description: server.error ｜ invalid.params | user.not_found | role.not_found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
       summary: Update a user
       tags:
       - users

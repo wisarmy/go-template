@@ -18,9 +18,10 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "go-template",
-	Short: "A go template application",
-	Long:  `A go template application containing a set of utilities`,
+	Use:          "go-template",
+	Short:        "A go template application",
+	Long:         `A go template application containing a set of utilities`,
+	SilenceUsage: true,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		// Skip config loading for help command
 		if cmd.Name() == "help" {

@@ -40,9 +40,8 @@ type RegisterInput struct {
 // @Accept       json
 // @Produce      json
 // @Param        user  body      RegisterInput  true  "User registration data"
-// @Success      201   {object}  UserInfo
-// @Failure      400   {object}  map[string]string
-// @Failure      500   {object}  map[string]string
+// @Success      200  {object}   response.Response{data=UserInfo} "ok"
+// @Failure      500  {object}   response.Response "server.error ｜ invalid.params ｜ user.register.error"
 // @Router       /auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var input RegisterInput
@@ -155,10 +154,8 @@ type UserInfo struct {
 // @Accept       json
 // @Produce      json
 // @Param        credentials  body      LoginInput  true  "Login credentials"
-// @Success      200          {object}  LoginResponse
-// @Failure      400          {object}  map[string]string
-// @Failure      401          {object}  map[string]string
-// @Failure      500          {object}  map[string]string
+// @Success      200  {object}   response.Response{data=LoginResponse} "ok"
+// @Failure      500  {object}   response.Response "server.error ｜ invalid.params ｜ user.login.error"
 // @Router       /auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var input LoginInput
@@ -246,10 +243,8 @@ type RefreshInput struct {
 // @Accept       json
 // @Produce      json
 // @Param        refresh  body      RefreshInput  true  "Refresh token"
-// @Success      200      {object}  LoginResponse
-// @Failure      400      {object}  map[string]string
-// @Failure      401      {object}  map[string]string
-// @Failure      500      {object}  map[string]string
+// @Success      200  {object}   response.Response{data=LoginResponse} "ok"
+// @Failure      500  {object}   response.Response "server.error ｜ invalid.params ｜ auth.token.expired | auth.token.invalid | user.not_found"
 // @Router       /auth/refresh [post]
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	var input RefreshInput
@@ -335,9 +330,8 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 // @Tags         auth
 // @Accept       json
 // @Produce      json
-// @Success      200  {object}  UserInfo
-// @Failure      401  {object}  map[string]string
-// @Failure      500  {object}  map[string]string
+// @Success      200  {object}   response.Response{data=UserInfo} "ok"
+// @Failure      500  {object}   response.Response "server.error ｜ invalid.params ｜ user.unauthorized | user.not_found"
 // @Router       /auth/me [get]
 // @Security     BearerAuth
 func (h *AuthHandler) GetUserInfo(c *gin.Context) {

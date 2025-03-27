@@ -55,7 +55,7 @@ func New(cfg *Config) (*Client, error) {
 	ent.NewClient(opts...)
 
 	// Test the connection
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := client.Schema.Create(ctx,

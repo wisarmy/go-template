@@ -11,8 +11,8 @@ import (
 
 // Response defines the unified API response structure
 type Response struct {
-	Status    string      `json:"status"`               // Status identifier
-	Message   string      `json:"message"`              // Status message
+	Code      string      `json:"code"`                 // code identifier
+	Message   string      `json:"message"`              // code message
 	Data      interface{} `json:"data,omitempty"`       // Response data
 	Timestamp int64       `json:"timestamp"`            // Unix timestamp in milliseconds
 	RequestID string      `json:"request_id,omitempty"` // Unique request identifier
@@ -30,7 +30,7 @@ func getRequestID(c *gin.Context) string {
 // Ok sends a successful response with data
 func Ok(c *gin.Context, data interface{}) {
 	c.JSON(http.StatusOK, Response{
-		Status:    errcode.Ok,
+		Code:      errcode.Ok,
 		Message:   errcode.GetMessage(errcode.Ok),
 		Data:      data,
 		Timestamp: time.Now().UnixMilli(),
@@ -41,7 +41,7 @@ func Ok(c *gin.Context, data interface{}) {
 // OkWithMessage sends a successful response with a custom message and data
 func OkWithMessage(c *gin.Context, message string, data interface{}) {
 	c.JSON(http.StatusOK, Response{
-		Status:    errcode.Ok,
+		Code:      errcode.Ok,
 		Message:   message,
 		Data:      data,
 		Timestamp: time.Now().UnixMilli(),
@@ -49,7 +49,7 @@ func OkWithMessage(c *gin.Context, message string, data interface{}) {
 	})
 }
 
-// Err sends an error response with a specified status
+// Err sends an error response with a specified code
 // Optional custom message can be provided to override the default message
 func Err(c *gin.Context, code string, customMsg ...string) {
 	message := errcode.GetMessage(code)
@@ -57,8 +57,8 @@ func Err(c *gin.Context, code string, customMsg ...string) {
 		message = customMsg[0]
 	}
 
-	c.JSON(http.StatusOK, Response{
-		Status:    code,
+	c.JSON(http.StatusInternalServerError, Response{
+		Code:      code,
 		Message:   message,
 		Timestamp: time.Now().UnixMilli(),
 		RequestID: getRequestID(c),
@@ -73,8 +73,8 @@ func ErrWithData(c *gin.Context, code string, data interface{}, customMsg ...str
 		message = customMsg[0]
 	}
 
-	c.JSON(http.StatusOK, Response{
-		Status:    code,
+	c.JSON(http.StatusInternalServerError, Response{
+		Code:      code,
 		Message:   message,
 		Data:      data,
 		Timestamp: time.Now().UnixMilli(),
@@ -86,8 +86,8 @@ func ErrWithData(c *gin.Context, code string, data interface{}, customMsg ...str
 func RespondWithError(c *gin.Context, err error) {
 	// Check if it's our custom error type
 	if e, ok := err.(*errcode.Error); ok {
-		c.JSON(http.StatusOK, Response{
-			Status:    e.Code,
+		c.JSON(http.StatusInternalServerError, Response{
+			Code:      e.Code,
 			Message:   e.Message,
 			Timestamp: time.Now().UnixMilli(),
 			RequestID: getRequestID(c),
@@ -96,8 +96,8 @@ func RespondWithError(c *gin.Context, err error) {
 	}
 
 	// For other error types, use unknown error code
-	c.JSON(http.StatusOK, Response{
-		Status:    errcode.Unknown,
+	c.JSON(http.StatusInternalServerError, Response{
+		Code:      errcode.Unknown,
 		Message:   err.Error(),
 		Timestamp: time.Now().UnixMilli(),
 		RequestID: getRequestID(c),

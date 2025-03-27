@@ -23,7 +23,17 @@ func NewRoleHandler(db *database.Client) *RoleHandler {
 	return &RoleHandler{db: db}
 }
 
-// List returns a list of roles
+// List godoc
+// @Summary      List Roles
+// @Description  Get a list of roles
+// @Tags         roles
+// @Accept       json
+// @Produce      json
+// @Param        with_users query bool false "Include users information"
+// @Success      200  {object}   response.Response{data=[]ent.Role} "ok"
+// @Failure      500  {object}   response.Response "server.error"
+// @Router       /roles [get]
+// @Security     BearerAuth
 func (h *RoleHandler) List(c *gin.Context) {
 	// Check if we should include users information
 	withUsers := c.Query("with_users") == "true"
@@ -47,7 +57,18 @@ func (h *RoleHandler) List(c *gin.Context) {
 	response.Ok(c, roles)
 }
 
-// Get returns a specific role by ID
+// Get godoc
+// @Summary      Get a role
+// @Description  Get a role by ID
+// @Tags         roles
+// @Accept       json
+// @Produce      json
+// @Param        id path int true "Role ID"
+// @Param        with_users query bool false "Include users information"
+// @Success      200  {object}   response.Response{data=ent.Role} "ok"
+// @Failure      500  {object}   response.Response "server.error | invalid.params | role.not_found"
+// @Router       /roles/{id} [get]
+// @Security     BearerAuth
 func (h *RoleHandler) Get(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -81,12 +102,24 @@ func (h *RoleHandler) Get(c *gin.Context) {
 	response.Ok(c, r)
 }
 
-// Create creates a new role
+type RoleCreateInput struct {
+	Name        string `json:"name" binding:"required"`
+	Description string `json:"description" binding:"required"`
+}
+
+// Create godoc
+// @Summary      Create a role
+// @Description  create a new role
+// @Tags         roles
+// @Accept       json
+// @Produce      json
+// @Param        role  body      RoleCreateInput  true  "Role Info"
+// @Success      200  {object}   response.Response{data=ent.Role} "ok"
+// @Failure      500  {object}   response.Response "server.error ｜ invalid.params"
+// @Router       /roles [post]
+// @Security     BearerAuth
 func (h *RoleHandler) Create(c *gin.Context) {
-	var input struct {
-		Name        string `json:"name" binding:"required"`
-		Description string `json:"description" binding:"required"`
-	}
+	var input RoleCreateInput
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		response.Err(c, errcode.InvalidParams, err.Error())
@@ -108,7 +141,23 @@ func (h *RoleHandler) Create(c *gin.Context) {
 	response.Ok(c, r)
 }
 
-// Update updates an existing role
+type RoleUpdateInput struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+// Update godoc
+// @Summary      Update a role
+// @Description  update an existing role
+// @Tags         roles
+// @Accept       json
+// @Produce      json
+// @Param        id    path      int              true  "Role ID"
+// @Param        role  body      RoleUpdateInput  true  "Role Info"
+// @Success      200  {object}   response.Response{data=ent.Role} "ok"
+// @Failure      500  {object}   response.Response "server.error ｜ invalid.params | role.not_found"
+// @Router       /roles/{id} [put]
+// @Security     BearerAuth
 func (h *RoleHandler) Update(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -116,10 +165,7 @@ func (h *RoleHandler) Update(c *gin.Context) {
 		return
 	}
 
-	var input struct {
-		Name        string `json:"name"`
-		Description string `json:"description"`
-	}
+	var input RoleUpdateInput
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		response.Err(c, errcode.InvalidParams, err.Error())
@@ -152,7 +198,17 @@ func (h *RoleHandler) Update(c *gin.Context) {
 	response.Ok(c, r)
 }
 
-// Delete deletes a role by ID
+// Delete godoc
+// @Summary      Delete a role
+// @Description  delete a role by ID
+// @Tags         roles
+// @Accept       json
+// @Produce      json
+// @Param        id   path      int  true  "Role ID"
+// @Success      200  {object}   response.Response "ok"
+// @Failure      500  {object}   response.Response "server.error ｜ invalid.params | role.not_found | role.in_use"
+// @Router       /roles/{id} [delete]
+// @Security     BearerAuth
 func (h *RoleHandler) Delete(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -194,7 +250,17 @@ func (h *RoleHandler) Delete(c *gin.Context) {
 	response.OkWithMessage(c, "Role deleted successfully", nil)
 }
 
-// GetUsers returns all users with a specific role
+// GetUsers godoc
+// @Summary      Get Users with a specific role
+// @Description  Get a list of users with a specific role
+// @Tags         roles
+// @Accept       json
+// @Produce      json
+// @Param        id path int true "Role ID"
+// @Success      200  {object}   response.Response{data=[]ent.User} "ok"
+// @Failure      500  {object}   response.Response "server.error ｜ invalid.params | role.not_found"
+// @Router       /roles/{id}/users [get]
+// @Security     BearerAuth
 func (h *RoleHandler) GetUsers(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

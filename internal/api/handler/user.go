@@ -38,9 +38,10 @@ func NewUserHandler(db *database.Client) *UserHandler {
 // @Tags         users
 // @Accept       json
 // @Produce      json
-// @Success      200  {array}   ent.User
-// @Failure      500  {object}  map[string]string
+// @Success      200  {object}   response.Response{data=[]ent.User} "ok"
+// @Failure      500  {object}   response.Response "server.error"
 // @Router       /users [get]
+// @Security     BearerAuth
 func (h *UserHandler) List(c *gin.Context) {
 	users, err := h.db.Ent.User.Query().WithRole().All(c.Request.Context())
 	if err != nil {
@@ -58,11 +59,10 @@ func (h *UserHandler) List(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        id   path      int  true  "User ID"
-// @Success      200  {object}  ent.User
-// @Failure      400  {object}  map[string]string
-// @Failure      404  {object}  map[string]string
-// @Failure      500  {object}  map[string]string
+// @Success      200  {object}   response.Response{data=ent.User} "ok"
+// @Failure      500  {object}   response.Response "server.error ｜ invalid.params ｜ user.not_found"
 // @Router       /users/{id} [get]
+// @Security     BearerAuth
 func (h *UserHandler) Get(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -91,10 +91,10 @@ func (h *UserHandler) Get(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        user  body      UserCreateInput  true  "User Info"
-// @Success      201   {object}  ent.User
-// @Failure      400   {object}  map[string]string
-// @Failure      500   {object}  map[string]string
+// @Success      200  {object}   response.Response{data=ent.User} "ok"
+// @Failure      500  {object}   response.Response "server.error ｜ invalid.params"
 // @Router       /users [post]
+// @Security     BearerAuth
 func (h *UserHandler) Create(c *gin.Context) {
 	var input UserCreateInput
 
@@ -149,11 +149,10 @@ type UserUpdateInput struct {
 // @Produce      json
 // @Param        id    path      int              true  "User ID"
 // @Param        user  body      UserUpdateInput  true  "User Info"
-// @Success      200   {object}  ent.User
-// @Failure      400   {object}  map[string]string
-// @Failure      404   {object}  map[string]string
-// @Failure      500   {object}  map[string]string
+// @Success      200  {object}   response.Response{data=ent.User} "ok"
+// @Failure      500  {object}   response.Response "server.error ｜ invalid.params | user.not_found | role.not_found"
 // @Router       /users/{id} [put]
+// @Security     BearerAuth
 func (h *UserHandler) Update(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -235,11 +234,10 @@ func (h *UserHandler) Update(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        id   path      int  true  "User ID"
-// @Success      200  {object}  map[string]string
-// @Failure      400  {object}  map[string]string
-// @Failure      404  {object}  map[string]string
-// @Failure      500  {object}  map[string]string
+// @Success      200  {object}   response.Response "ok"
+// @Failure      500  {object}   response.Response "server.error ｜ invalid.params | user.not_found"
 // @Router       /users/{id} [delete]
+// @Security     BearerAuth
 func (h *UserHandler) Delete(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
