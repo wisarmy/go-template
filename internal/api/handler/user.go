@@ -84,6 +84,15 @@ func (h *UserHandler) Get(c *gin.Context) {
 	response.Ok(c, user)
 }
 
+// UserCreateInput represents the input for creating a user
+type UserCreateInput struct {
+	Name     string      `json:"name" binding:"required" example:"John Doe"`
+	Email    string      `json:"email" binding:"required,email" example:"john@example.com"`
+	Password string      `json:"password" binding:"required,min=6" example:"secret123"`
+	RoleID   int         `json:"role_id" binding:"required" example:"1"`
+	Status   user.Status `json:"status" example:"active"`
+}
+
 // Create godoc
 // @Summary      Create a user
 // @Description  create a new user
@@ -109,13 +118,20 @@ func (h *UserHandler) Create(c *gin.Context) {
 		response.Err(c, errcode.ServerError, "Failed to process user data")
 		return
 	}
-	user, err := h.db.Ent.User.Create().
+	// Start building the create query
+	create := h.db.Ent.User.Create().
 		SetName(input.Name).
 		SetEmail(input.Email).
 		SetPassword(hashedPassword).
-		SetRoleID(input.RoleID).
-		Save(c.Request.Context())
+		SetRoleID(input.RoleID)
 
+	// Set status if provided, otherwise it will use default value
+	if input.Status != "" {
+		create = create.SetStatus(input.Status)
+	}
+
+	// Save the user
+	user, err := create.Save(c.Request.Context())
 	if err != nil {
 		logger.Errorf("Failed to create user: %v", err)
 		response.Err(c, errcode.ServerError, "Failed to create user")
@@ -125,20 +141,13 @@ func (h *UserHandler) Create(c *gin.Context) {
 	response.Ok(c, user)
 }
 
-// UserCreateInput represents the input for creating a user
-type UserCreateInput struct {
-	Name     string `json:"name" binding:"required" example:"John Doe"`
-	Email    string `json:"email" binding:"required,email" example:"john@example.com"`
-	Password string `json:"password" binding:"required,min=6" example:"secret123"`
-	RoleID   int    `json:"role_id" binding:"required" example:"1"`
-}
-
 // UserUpdateInput represents the input for updating a user
 type UserUpdateInput struct {
-	Name     string `json:"name" example:"John Doe"`
-	Email    string `json:"email" example:"john@example.com"`
-	Password string `json:"password" example:"newsecret123"`
-	RoleID   *int   `json:"role_id" example:"2"`
+	Name     string      `json:"name" example:"John Doe"`
+	Email    string      `json:"email" example:"john@example.com"`
+	Password string      `json:"password" example:"newsecret123"`
+	RoleID   *int        `json:"role_id" example:"2"`
+	Status   user.Status `json:"status" example:"active"`
 }
 
 // Update godoc
@@ -185,6 +194,9 @@ func (h *UserHandler) Update(c *gin.Context) {
 			return
 		}
 		update = update.SetPassword(hashedPassword)
+	}
+	if input.Status != "" {
+		update = update.SetStatus(input.Status)
 	}
 	// Handle role relationship
 	if input.RoleID != nil {

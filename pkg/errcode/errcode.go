@@ -6,6 +6,24 @@ const (
 	Unknown = "unknown.error"
 )
 
+// System level error codes
+const (
+	ServerError  = "server.error"
+	DBError      = "db.error"
+	NetworkError = "network.error"
+)
+
+// Resource error codes
+const (
+	ResourceNotFound  = "resource.not_found"
+	ResourceForbidden = "resource.forbidden"
+)
+
+// Parameter validation error codes
+const (
+	InvalidParams = "invalid.params"
+)
+
 // User service error codes
 const (
 	UserNotFound      = "user.not_found"
@@ -27,26 +45,6 @@ const (
 	RoleNotFound = "role.not_found"
 	RoleInUse    = "role.in_use"
 )
-
-// Parameter validation error codes
-const (
-	InvalidParams = "invalid.params"
-)
-
-// System level error codes
-const (
-	ServerError  = "server.error"
-	DBError      = "db.error"
-	NetworkError = "network.error"
-)
-
-// Resource error codes
-const (
-	ResourceNotFound  = "resource.not_found"
-	ResourceForbidden = "resource.forbidden"
-)
-
-// Message mapping for error codes
 
 // Error represents an error with a code and message
 type Error struct {

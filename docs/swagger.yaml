@@ -49,6 +49,10 @@ definitions:
       role_id:
         description: RoleID holds the value of the "role_id" field.
         type: integer
+      status:
+        allOf:
+        - $ref: '#/definitions/user.Status'
+        description: Status holds the value of the "status" field.
       updated_at:
         description: UpdatedAt holds the value of the "updated_at" field.
         type: string
@@ -140,6 +144,10 @@ definitions:
       role_id:
         example: 1
         type: integer
+      status:
+        allOf:
+        - $ref: '#/definitions/user.Status'
+        example: active
     required:
     - email
     - name
@@ -171,6 +179,10 @@ definitions:
       role_id:
         example: 2
         type: integer
+      status:
+        allOf:
+        - $ref: '#/definitions/user.Status'
+        example: active
     type: object
   response.Response:
     properties:
@@ -189,6 +201,16 @@ definitions:
         description: Unix timestamp in milliseconds
         type: integer
     type: object
+  user.Status:
+    enum:
+    - active
+    - active
+    - disabled
+    type: string
+    x-enum-varnames:
+    - DefaultStatus
+    - StatusActive
+    - StatusDisabled
 info:
   contact: {}
   description: A RESTful API for Go Template
@@ -220,7 +242,7 @@ paths:
                   $ref: '#/definitions/handler.LoginResponse'
               type: object
         "500":
-          description: server.error ｜ invalid.params ｜ user.login.error
+          description: server.error ｜ invalid.params ｜ user.login.error ｜ user.disabled
           schema:
             $ref: '#/definitions/response.Response'
       summary: User login
@@ -278,7 +300,7 @@ paths:
               type: object
         "500":
           description: server.error ｜ invalid.params ｜ auth.token.expired | auth.token.invalid
-            | user.not_found
+            | user.not_found | user.disabled
           schema:
             $ref: '#/definitions/response.Response'
       summary: Refresh token

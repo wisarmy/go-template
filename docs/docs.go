@@ -59,7 +59,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "server.error ｜ invalid.params ｜ user.login.error",
+                        "description": "server.error ｜ invalid.params ｜ user.login.error ｜ user.disabled",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -157,7 +157,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "server.error ｜ invalid.params ｜ auth.token.expired | auth.token.invalid | user.not_found",
+                        "description": "server.error ｜ invalid.params ｜ auth.token.expired | auth.token.invalid | user.not_found | user.disabled",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -883,6 +883,14 @@ const docTemplate = `{
                     "description": "RoleID holds the value of the \"role_id\" field.",
                     "type": "integer"
                 },
+                "status": {
+                    "description": "Status holds the value of the \"status\" field.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/user.Status"
+                        }
+                    ]
+                },
                 "updated_at": {
                     "description": "UpdatedAt holds the value of the \"updated_at\" field.",
                     "type": "string"
@@ -1022,6 +1030,14 @@ const docTemplate = `{
                 "role_id": {
                     "type": "integer",
                     "example": 1
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/user.Status"
+                        }
+                    ],
+                    "example": "active"
                 }
             }
         },
@@ -1060,6 +1076,14 @@ const docTemplate = `{
                 "role_id": {
                     "type": "integer",
                     "example": 2
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/user.Status"
+                        }
+                    ],
+                    "example": "active"
                 }
             }
         },
@@ -1086,6 +1110,19 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
+        },
+        "user.Status": {
+            "type": "string",
+            "enum": [
+                "active",
+                "active",
+                "disabled"
+            ],
+            "x-enum-varnames": [
+                "DefaultStatus",
+                "StatusActive",
+                "StatusDisabled"
+            ]
         }
     },
     "securityDefinitions": {

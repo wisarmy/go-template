@@ -1,8 +1,18 @@
 package errcode
 
+// Message mapping for error codes
 var messages = map[string]string{
 	Ok:      "操作成功",
 	Unknown: "未知错误",
+
+	ServerError:  "服务器内部错误",
+	DBError:      "数据库操作失败",
+	NetworkError: "网络通信错误",
+
+	ResourceNotFound:  "资源不存在",
+	ResourceForbidden: "禁止访问此资源",
+
+	InvalidParams: "无效的参数",
 
 	UserNotFound:      "用户不存在",
 	UserUnauthorized:  "用户未授权",
@@ -13,15 +23,6 @@ var messages = map[string]string{
 	AuthTokenInvalid: "无效的认证令牌",
 	AuthTokenExpired: "认证令牌已过期",
 	AuthAccessDenied: "拒绝访问",
-
-	InvalidParams: "无效的参数",
-
-	ResourceNotFound:  "资源不存在",
-	ResourceForbidden: "禁止访问此资源",
-
-	ServerError:  "服务器内部错误",
-	DBError:      "数据库操作失败",
-	NetworkError: "网络通信错误",
 
 	RoleNotFound: "角色不存在",
 	RoleInUse:    "角色正在使用中，无法删除",

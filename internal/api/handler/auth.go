@@ -155,7 +155,7 @@ type UserInfo struct {
 // @Produce      json
 // @Param        credentials  body      LoginInput  true  "Login credentials"
 // @Success      200  {object}   response.Response{data=LoginResponse} "ok"
-// @Failure      500  {object}   response.Response "server.error ｜ invalid.params ｜ user.login.error"
+// @Failure      500  {object}   response.Response "server.error ｜ invalid.params ｜ user.login.error ｜ user.disabled"
 // @Router       /auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var input LoginInput
@@ -182,10 +182,10 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	}
 
 	// Check if user is disabled
-	// if u.Disabled {
-	// 	response.Err(c, errcode.UserDisabled)
-	// 	return
-	// }
+	if u.Status == user.StatusDisabled {
+		response.Err(c, errcode.UserDisabled)
+		return
+	}
 
 	// Check password
 	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(input.Password))
@@ -244,7 +244,7 @@ type RefreshInput struct {
 // @Produce      json
 // @Param        refresh  body      RefreshInput  true  "Refresh token"
 // @Success      200  {object}   response.Response{data=LoginResponse} "ok"
-// @Failure      500  {object}   response.Response "server.error ｜ invalid.params ｜ auth.token.expired | auth.token.invalid | user.not_found"
+// @Failure      500  {object}   response.Response "server.error ｜ invalid.params ｜ auth.token.expired | auth.token.invalid | user.not_found | user.disabled"
 // @Router       /auth/refresh [post]
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	var input RefreshInput
@@ -282,10 +282,10 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	}
 
 	// Check if user is disabled
-	// if u.Disabled {
-	// 	response.Err(c, errcode.UserDisabled)
-	// 	return
-	// }
+	if u.Status == user.StatusDisabled {
+		response.Err(c, errcode.UserDisabled)
+		return
+	}
 
 	// Generate new JWT token
 	roleName := "user"
