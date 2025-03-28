@@ -38,6 +38,7 @@ var rootCmd = &cobra.Command{
 		if err := logger.Init(&cfg.Log); err != nil {
 			return fmt.Errorf("failed to initialize logger: %w", err)
 		}
+		logger.Infof("Logger initialized with level: %s", logger.Level())
 
 		// Initialize database connection
 		if cmd.Name() == "daemon" {

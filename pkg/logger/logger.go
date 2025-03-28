@@ -63,6 +63,9 @@ func Init(cfg *Config) error {
 		jsonEncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 
 		// Determine log level
+		if envLogLevel := os.Getenv("GO_LOG"); envLogLevel != "" {
+			cfg.Level = envLogLevel
+		}
 		level := getLogLevel(cfg.Level)
 
 		// Configure cores based on output destination
@@ -150,6 +153,14 @@ func getLogLevel(levelStr string) zapcore.Level {
 	default:
 		return zapcore.InfoLevel
 	}
+}
+
+// Level returns the current log level
+func Level() string {
+	if sugar != nil {
+		return sugar.Level().String()
+	}
+	return ""
 }
 
 // Debug logs a debug message

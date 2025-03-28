@@ -129,6 +129,17 @@ definitions:
       name:
         type: string
     type: object
+  handler.RoleUserCountDTO:
+    properties:
+      description:
+        type: string
+      role_id:
+        type: integer
+      role_name:
+        type: string
+      user_count:
+        type: integer
+    type: object
   handler.UserCreateInput:
     properties:
       email:
@@ -163,6 +174,19 @@ definitions:
       name:
         type: string
       role:
+        type: string
+    type: object
+  handler.UserStatsDTO:
+    properties:
+      active_users:
+        type: integer
+      disabled_users:
+        type: integer
+      newest_user_date:
+        type: string
+      total_users:
+        type: integer
+      users_per_role_json:
         type: string
     type: object
   handler.UserUpdateInput:
@@ -337,6 +361,121 @@ paths:
       summary: Register new user
       tags:
       - auth
+  /raw/data-structures:
+    get:
+      consumes:
+      - application/json
+      description: Shows how to handle complex JSON data returned from raw SQL
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties: true
+                  type: object
+              type: object
+        "500":
+          description: server.error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Complex JSON data example
+      tags:
+      - raw-queries
+  /raw/execute-update:
+    post:
+      consumes:
+      - application/json
+      description: Example of executing a raw SQL update query
+      parameters:
+      - description: Role name to update users for
+        in: query
+        name: role_name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: integer
+                  type: object
+              type: object
+        "500":
+          description: server.error | invalid.params
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Execute update example
+      tags:
+      - raw-queries
+  /raw/role-user-counts:
+    get:
+      consumes:
+      - application/json
+      description: Get counts of users per role using raw SQL
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.RoleUserCountDTO'
+                  type: array
+              type: object
+        "500":
+          description: server.error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get role user counts
+      tags:
+      - raw-queries
+  /raw/user-stats:
+    get:
+      consumes:
+      - application/json
+      description: Get user statistics using raw SQL queries
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.UserStatsDTO'
+              type: object
+        "500":
+          description: server.error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get user statistics
+      tags:
+      - raw-queries
   /roles:
     get:
       consumes:

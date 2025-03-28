@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"go-template/ent"
 	"go-template/ent/migrate"
@@ -10,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"entgo.io/ent/dialect"
+	entsql "entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/schema"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -23,12 +26,19 @@ type Config struct {
 // Client represents the database client
 type Client struct {
 	Ent *ent.Client
+	db  *sql.DB
 }
 
 // New creates a new database client
 func New(cfg *Config) (*Client, error) {
 	RegisterPgxDriver()
 	logger.Info("Connecting to database...")
+
+	// Connect to the database using the specified driver and DSN
+	db, err := sql.Open(cfg.Driver, cfg.DSN)
+	if err != nil {
+		return nil, fmt.Errorf("failed opening connection to database: %w", err)
+	}
 
 	// options for the client
 	var opts []ent.Option
@@ -48,9 +58,11 @@ func New(cfg *Config) (*Client, error) {
 			logger.Info(message)
 		}))
 	}
+	// Create an ent.Driver from `db`
+	drv := entsql.OpenDB(dialect.Postgres, db)
+	opts = append(opts, ent.Driver(drv))
 
-	// Connect to the database using the specified driver and DSN
-	client, err := ent.Open(cfg.Driver, cfg.DSN, opts...)
+	client := ent.NewClient(opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed opening connection to database: %w", err)
 	}
@@ -75,7 +87,7 @@ func New(cfg *Config) (*Client, error) {
 	}
 
 	logger.Info("Database connection established")
-	return &Client{Ent: client}, nil
+	return &Client{Ent: client, db: db}, nil
 }
 
 // Close closes the database connection

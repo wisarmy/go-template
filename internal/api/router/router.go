@@ -70,5 +70,7 @@ func SetupRoutes(r *gin.Engine, db *database.Client, cfg *config.Config) {
 			roles.GET("/:id/users", roleHandler.GetUsers) // Get users with this role
 		}
 
+		// Raw Query routes
+		setupRawQueryRoutes(v1, db)
 	}
 }
