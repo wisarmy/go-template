@@ -63,10 +63,6 @@ func New(cfg *Config) (*Client, error) {
 	opts = append(opts, ent.Driver(drv))
 
 	client := ent.NewClient(opts...)
-	if err != nil {
-		return nil, fmt.Errorf("failed opening connection to database: %w", err)
-	}
-	ent.NewClient(opts...)
 
 	// Test the connection
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
